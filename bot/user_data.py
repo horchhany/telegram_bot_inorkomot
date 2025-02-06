@@ -1,5 +1,4 @@
 from db import conn, cursor
-
 class UserData:
 
     @classmethod
