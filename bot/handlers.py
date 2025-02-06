@@ -37,19 +37,26 @@ async def ask_photo(update: Update, context: CallbackContext):
     return PHOTO
 
 async def finish(update: Update, context: CallbackContext):
-    photo = update.message.photo[-1]
-    file = await photo.get_file()
-    folder = "data/user_photos"
-    os.makedirs(folder, exist_ok=True)
-    file_path = os.path.join(folder, f"{update.effective_chat.id}.jpg")
-    await file.download_to_drive(file_path)
+    photo = update.message.photo[-1]  # Get highest resolution
+    file_id = photo.file_id  # Get the file ID
 
-    context.user_data["photo"] = file_path
+    context.user_data["photo_url"] = file_id  # Save file_id in user data
     chat_id = update.effective_chat.id
-    UserData.save_user(chat_id, context.user_data)
+
+    UserData.save_user(chat_id, context.user_data)  # Save to DB
 
     await update.message.reply_text(f"Thank you! Your profile is saved.\nName: {context.user_data['name']}")
     return ConversationHandler.END
+
+async def send_saved_photo(update: Update, context: CallbackContext):
+    chat_id = update.effective_chat.id
+    user = UserData.load_user(chat_id)
+
+    if user and user.get("photo_url"):
+        await context.bot.send_photo(chat_id=chat_id, photo=user["photo_url"])
+    else:
+        await update.message.reply_text("No photo found.")
+
 
 async def cancel(update: Update, context: CallbackContext):
     await update.message.reply_text("Canceled. Type /start to restart.", reply_markup=remove_keyboard())

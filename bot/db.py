@@ -13,14 +13,8 @@ conn = psycopg2.connect(DATABASE_URL)
 cursor = conn.cursor()
 
 cursor.execute("""
-CREATE TABLE IF NOT EXISTS users (
-    chat_id BIGINT PRIMARY KEY,
-    name TEXT,
-    age INTEGER,
-    gender TEXT,
-    description TEXT,
-    photo_url TEXT
-);
+ALTER TABLE users ADD COLUMN photo_file_id TEXT;
+
 """)
 conn.commit()
 
