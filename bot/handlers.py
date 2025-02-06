@@ -37,25 +37,28 @@ async def ask_photo(update: Update, context: CallbackContext):
     return PHOTO
 
 async def finish(update: Update, context: CallbackContext):
-    photo = update.message.photo[-1]  # Get highest resolution
-    file_id = photo.file_id  # Get the file ID
-
-    context.user_data["photo_url"] = file_id  # Save file_id in user data
+    photo = update.message.photo[-1]
+    file_id = photo.file_id  # Get the file_id from Telegram
     chat_id = update.effective_chat.id
 
-    UserData.save_user(chat_id, context.user_data)  # Save to DB
+    context.user_data["photo_file_id"] = file_id  
+    UserData.save_user(chat_id, context.user_data)  # Save to PostgreSQL
 
     await update.message.reply_text(f"Thank you! Your profile is saved.\nName: {context.user_data['name']}")
     return ConversationHandler.END
 
-async def send_saved_photo(update: Update, context: CallbackContext):
-    chat_id = update.effective_chat.id
-    user = UserData.load_user(chat_id)
 
-    if user and user.get("photo_url"):
-        await context.bot.send_photo(chat_id=chat_id, photo=user["photo_url"])
+async def send_saved_photo(update: Update, context: CallbackContext):
+    # Fetch user data from PostgreSQL
+    user_data = UserData.load_user(chat_id)
+    photo_file_id = user_data.get("photo_file_id")
+
+    # Send photo using Telegram's file_id
+    if photo_file_id:
+        await context.bot.send_photo(chat_id=chat_id, photo=photo_file_id, caption=caption)
     else:
-        await update.message.reply_text("No photo found.")
+        await update.message.reply_text(f"No photo found for {name}.")
+
 
 
 async def cancel(update: Update, context: CallbackContext):

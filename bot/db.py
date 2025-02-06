@@ -13,7 +13,8 @@ conn = psycopg2.connect(DATABASE_URL)
 cursor = conn.cursor()
 
 cursor.execute("""
-ALTER TABLE users ADD COLUMN photo_file_id TEXT;
+ALTER TABLE users DROP COLUMN IF EXISTS photo_url;
+
 
 """)
 conn.commit()
