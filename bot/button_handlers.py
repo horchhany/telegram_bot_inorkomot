@@ -64,12 +64,16 @@ async def handle_buttons(update, context):
         user_data = data[current_index]
                     # Get the username if available
         username = await get_username_by_chat_id(context, user_data.get("chat_id", chat_id))
+        
+        # Prepare caption with default values if keys are missing
+        name = user_data.get("name", "No name provided")
+        age = user_data.get("age", "No age provided")
+        gender = user_data.get("gender", "No gender provided")
+        description = user_data.get("description", "No description provided")
+        
         # Construct caption
-        caption = f"{user_data.get('name', 'No name')},
-            {user_data.get ('@'{username}},
-            {user_data.get('age', 'No age')},
-            {user_data.get('gender', 'No gender')},
-            {user_data.get('description', 'No description')}"
+        # Construct the caption
+        caption = f"{name}, @{username}, {age}, {gender}, {description}" 
 
         # Send user profile
         if user_data.get("photo_file_id"):
