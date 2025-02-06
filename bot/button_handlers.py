@@ -66,7 +66,7 @@ async def handle_buttons(update, context):
         username = await get_username_by_chat_id(context, user_data.get("chat_id", chat_id))
         # Construct caption
         caption = f"{user_data.get('name', 'No name')},
-            @{username},
+            {user_data.get ('@'{username}},
             {user_data.get('age', 'No age')},
             {user_data.get('gender', 'No gender')},
             {user_data.get('description', 'No description')}"
