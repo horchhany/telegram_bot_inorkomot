@@ -43,8 +43,8 @@ async def handle_buttons(update, context):
         caption = f"{user_data.get('name', 'No name')}, {user_data.get('age', 'No age')}, {user_data.get('gender', 'No gender')}, {user_data.get('description', 'No description')}"
 
         # Send user profile
-        if user_data.get("photo_url"):
-            await context.bot.send_photo(chat_id=chat_id, photo=user_data["photo_url"], caption=caption)
+        if user_data.get("photo_file_id"):
+            await context.bot.send_photo(chat_id=chat_id, photo=user_data["photo_file_id"], caption=caption)
         else:
             await update.message.reply_text(f"No photo found for {user_data['name']}.")
 
