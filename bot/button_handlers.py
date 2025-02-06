@@ -30,7 +30,7 @@ async def handle_buttons(update, context):
         return
 
     # Initialize the user index
-    if user_input in ["❤️"]:
+    if user_input in ["❤️",]:
         current_index = context.user_data.get("current_index", 0)
 
         if current_index >= len(data):
@@ -40,10 +40,7 @@ async def handle_buttons(update, context):
         user_data = data[current_index]
         
         # Construct caption
-        caption = f"{user_data.get('name', 'No name')},
-            {user_data.get('age', 'No age')},
-            {user_data.get('gender', 'No gender')},
-            {user_data.get('description', 'No description')}"
+        caption = f"{user_data.get('name', 'No name')},{user_data.get('age', 'No age')}, {user_data.get('gender', 'No gender')}, {user_data.get('description', 'No description')}"
 
         # Send user profile
         if user_data.get("photo_file_id"):
@@ -53,8 +50,6 @@ async def handle_buttons(update, context):
 
         # Update the index to show the next user
         context.user_data["current_index"] = current_index + 1
-
-    
 
     elif user_input == "💤":
         await update_user(update, context)  # Restart the conversation
