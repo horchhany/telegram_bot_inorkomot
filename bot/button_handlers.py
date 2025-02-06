@@ -30,7 +30,7 @@ async def handle_buttons(update, context):
         return
 
     # Initialize the user index
-    if user_input in ["❤️",]:
+    if user_input in ["❤️"]:
         current_index = context.user_data.get("current_index", 0)
 
         if current_index >= len(data):
@@ -39,13 +39,14 @@ async def handle_buttons(update, context):
 
         user_data = data[current_index]
         
-        # Construct caption
-        caption = f"
-            {user_data.get('name', 'No name')}, 
-            {user_data.get('age', 'No age')}, 
-            {user_data.get('gender', 'No gender')}, 
-            {user_data.get('description', 'No description')}"
-
+        # Prepare caption with default values if keys are missing
+        name = user_data.get("name", "No name provided")
+        age = user_data.get("age", "No age provided")
+        gender = user_data.get("gender", "No gender provided")
+        description = user_data.get("description", "No description provided")
+        
+        # Construct the caption
+        caption = f"{name}, {age}, {gender}, {description}"
         # Send user profile
         if user_data.get("photo_file_id"):
             await context.bot.send_photo(chat_id=chat_id, photo=user_data["photo_file_id"], caption=caption)
