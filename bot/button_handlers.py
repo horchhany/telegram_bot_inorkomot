@@ -40,7 +40,11 @@ async def handle_buttons(update, context):
         user_data = data[current_index]
         
         # Construct caption
-        caption = f"{user_data.get('name', 'No name')},{user_data.get('age', 'No age')}, {user_data.get('gender', 'No gender')}, {user_data.get('description', 'No description')}"
+        caption = f"
+            {user_data.get('name', 'No name')}, 
+            {user_data.get('age', 'No age')}, 
+            {user_data.get('gender', 'No gender')}, 
+            {user_data.get('description', 'No description')}"
 
         # Send user profile
         if user_data.get("photo_file_id"):
