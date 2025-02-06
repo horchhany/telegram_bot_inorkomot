@@ -64,23 +64,27 @@ async def handle_buttons(update, context):
             current_index = 0  # Restart the user browsing
 
         user_data = data[current_index]
-                    # Get the username if available
-        username = await get_username_by_chat_id(context, user_data.get("chat_id", chat_id))
+        
         # Prepare caption with default values if keys are missing
         name = user_data.get("name", "No name provided")
         age = user_data.get("age", "No age provided")
         gender = user_data.get("gender", "No gender provided")
         description = user_data.get("description", "No description provided")
+        
+        # Get the username if available
+        username = await get_username_by_chat_id(context, user_data.get("chat_id", chat_id))
 
         # Construct the caption
-        caption = f"{name}, @{username}{age}, {gender}, {description}"
+        caption = f"{name}, @{username}, {age}, {gender}, {description}"
+
         # Send user profile
         if user_data.get("photo_file_id"):
             await context.bot.send_photo(chat_id=chat_id, photo=user_data["photo_file_id"], caption=caption)
         else:
             await update.message.reply_text(f"No photo found for {user_data['name']}.")
+
         # Update the index to show the next user
         context.user_data["current_index"] = current_index + 1
-        
+
     elif user_input == "💤":
         await update_user(update, context)  # Restart the conversation
