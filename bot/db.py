@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
     media_file_ids TEXT[]
 );
                
-CREATE TABLE user_media (
+CREATE TABLE IF NOT user_media (
     id SERIAL PRIMARY KEY,
     chat_id BIGINT NOT NULL,
     file_id TEXT NOT NULL,
