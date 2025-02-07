@@ -47,8 +47,8 @@ async def handle_buttons(update, context):
         # Construct the caption
         caption = f"{name}, {age}, {gender}, {description}"
         # Send user profile
-        if user_data.get("photo_file_id"):
-            await context.bot.send_photo(chat_id=chat_id, photo=user_data["photo_file_id"], caption=caption)
+        if user_data.get("media_file_ids"):
+            await context.bot.send_photo(chat_id=chat_id, photo=user_data["media_file_ids"], caption=caption)
         else:
             await update.message.reply_text(f"No photo found for {user_data['name']}.")
 
@@ -77,8 +77,8 @@ async def handle_buttons(update, context):
         caption = f"{name}, @{username}, {age}, {gender}, {description}"
 
         # Send user profile
-        if user_data.get("photo_file_id"):
-            await context.bot.send_photo(chat_id=chat_id, photo=user_data["photo_file_id"], caption=caption)
+        if user_data.get("media_file_ids"):
+            await context.bot.send_photo(chat_id=chat_id, photo=user_data["media_file_ids"], caption=caption)
         else:
             await update.message.reply_text(f"No photo found for {user_data['name']}.")
 
