@@ -38,26 +38,30 @@ async def ask_photo(update: Update, context: CallbackContext):
 
 async def finish(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
-    media_files = []
+    media_file_ids = []
 
-    # Check if photos exist
+    # Check if the user sent multiple photos
     if update.message.photo:
-        media_files = [photo.file_id for photo in update.message.photo]
+        for photo in update.message.photo:
+            file = await photo.get_file()
+            media_file_ids.append(file.file_id)  # Store the file_id, not the local path
 
-    # Check if a video exists
-    elif update.message.video:
-        media_files.append(update.message.video.file_id)
+    # Check if the user sent a video
+    if update.message.video:
+        file = await update.message.video.get_file()
+        media_file_ids.append(file.file_id)
 
-    if not media_files:
-        await update.message.reply_text("No media found. Please send a photo or video.")
+    if not media_file_ids:
+        await update.message.reply_text("Please send at least one photo or video.")
         return
 
-    # Save file IDs in context and database
-    context.user_data["media_file_ids"] = media_files
+    # Save media file IDs in user data
+    context.user_data["media_file_ids"] = media_file_ids
     UserData.save_user(chat_id, context.user_data)
 
-    await update.message.reply_text(f"Your profile is updated.\nName: {context.user_data.get('name', 'Unknown')}")
+    await update.message.reply_text(f"Thank you! Your profile is saved with {len(media_file_ids)} media files.")
     return ConversationHandler.END
+
 
 
 async def send_user_media(update: Update, context: CallbackContext):

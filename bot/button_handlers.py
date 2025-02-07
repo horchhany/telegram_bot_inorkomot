@@ -1,7 +1,7 @@
 
 from buttons import update_user
 from user_data import UserData
-
+from telegram import InputMediaPhoto # type: ignore
 
 # Retrieve the username based on chat_id
 async def get_username_by_chat_id(context, chat_id):
@@ -17,7 +17,6 @@ async def get_username_by_chat_id(context, chat_id):
     
 # Handler for received button clicks
 async def handle_buttons(update, context):
-    
     user_input = update.message.text
     chat_id = update.effective_chat.id
 
@@ -37,23 +36,33 @@ async def handle_buttons(update, context):
             current_index = 0  # Restart the user browsing
 
         user_data = data[current_index]
-        
+
         # Prepare caption with default values if keys are missing
         name = user_data.get("name", "No name provided")
         age = user_data.get("age", "No age provided")
         gender = user_data.get("gender", "No gender provided")
         description = user_data.get("description", "No description provided")
 
+        # Get the username if available
+        username = await get_username_by_chat_id(context, user_data.get("chat_id", chat_id))
+
         # Construct the caption
         caption = f"{name}, {age}, {gender}, {description}"
-        # Send user profile
-        if user_data.get("media_file_ids"):
-            await context.bot.send_photo(chat_id=chat_id, photo=user_data["media_file_ids"], caption=caption)
+
+        # Fetch multiple media files (assuming comma-separated storage)
+        media_file_ids = user_data.get("media_file_ids", "")
+        media_files = media_file_ids.split(",") if media_file_ids else []
+
+        if media_files:
+            media_group = [InputMediaPhoto(media) for media in media_files[:10]]  # Send up to 10 photos at once
+            await context.bot.send_media_group(chat_id=chat_id, media=media_group)
+            await update.message.reply_text(caption)  # Send caption separately
         else:
-            await update.message.reply_text(f"No photo found for {user_data['name']}.")
+            await update.message.reply_text(f"No media found for {user_data['name']}.")
 
         # Update the index to show the next user
         context.user_data["current_index"] = current_index + 1
+
 
     elif user_input in ["📩 / 📹"]:
         current_index = context.user_data.get("current_index", 0)

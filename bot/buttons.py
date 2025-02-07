@@ -1,4 +1,4 @@
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove # type: ignore
 
 def start_keyboard():
     return ReplyKeyboardMarkup([["Let's Start"]], resize_keyboard=True)

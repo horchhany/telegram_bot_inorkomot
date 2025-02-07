@@ -7,7 +7,8 @@ class UserData:
         cursor.execute("SELECT * FROM users WHERE chat_id = %s", (chat_id,))
         existing_user = cursor.fetchone()
 
-        media_file_ids = user_data.get("media_file_ids", [])
+        # Convert list of file IDs to a comma-separated string
+        media_file_ids = ",".join(user_data.get("media_file_ids", []))
 
         if existing_user:
             cursor.execute("""
