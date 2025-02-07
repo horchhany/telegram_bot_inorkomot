@@ -11,12 +11,12 @@ class UserData:
 
     @classmethod
     def save_user(cls, chat_id, user_data):
-        """ Saves or updates a user in the database. """
+        """ Saves or updates a user and stores media files in `user_media`. """
         try:
             conn = psycopg2.connect(DATABASE_URL)
             with conn:
                 with conn.cursor() as cursor:
-                    # Check if the user already exists
+                    # Check if user exists
                     cursor.execute("SELECT 1 FROM users WHERE chat_id = %s", (chat_id,))
                     exists = cursor.fetchone()
 
@@ -24,33 +24,47 @@ class UserData:
                         # Update user info
                         cursor.execute("""
                             UPDATE users 
-                            SET name = %s, age = %s, gender = %s, description = %s, media_file_ids = %s
+                            SET name = %s, age = %s, gender = %s, description = %s
                             WHERE chat_id = %s
                         """, (
                             user_data.get("name"),
                             user_data.get("age"),
                             user_data.get("gender"),
                             user_data.get("description"),
-                            user_data.get("media_file_ids"),  # Stored as an array in PostgreSQL
                             chat_id
                         ))
                     else:
                         # Insert new user
                         cursor.execute("""
-                            INSERT INTO users (chat_id, name, age, gender, description, media_file_ids) 
-                            VALUES (%s, %s, %s, %s, %s, %s)
+                            INSERT INTO users (chat_id, name, age, gender, description) 
+                            VALUES (%s, %s, %s, %s, %s)
                         """, (
                             chat_id,
                             user_data.get("name"),
                             user_data.get("age"),
                             user_data.get("gender"),
-                            user_data.get("description"),
-                            user_data.get("media_file_ids")
+                            user_data.get("description")
                         ))
+
+                    # Save media files in user_media
+                    media_files = user_data.get("media_file_ids", [])
+                    if media_files:
+                        # Delete existing media for this user to prevent duplication
+                        cursor.execute("DELETE FROM user_media WHERE chat_id = %s", (chat_id,))
+                        
+                        # Insert new media files
+                        for file_id in media_files:
+                            file_type = "photo"  # Default to photo, update as needed
+                            cursor.execute("""
+                                INSERT INTO user_media (chat_id, file_id, file_type)
+                                VALUES (%s, %s, %s)
+                            """, (chat_id, file_id, file_type))
+
         except psycopg2.Error as e:
             print(f"Database error: {e}")
         finally:
             conn.close()
+
 
     @classmethod
     def load_users(cls):
