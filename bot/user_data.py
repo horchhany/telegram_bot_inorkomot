@@ -11,7 +11,7 @@ class UserData:
 
     @classmethod
     def save_user(cls, chat_id, user_data):
-        """ Saves or updates a user and stores media files in `user_media`. """
+        """ Saves or updates a user and stores media in `user_media` table. """
         try:
             conn = psycopg2.connect(DATABASE_URL)
             with conn:
@@ -49,7 +49,7 @@ class UserData:
                     # Save media files in user_media
                     media_files = user_data.get("media_file_ids", [])
                     if media_files:
-                        # Delete existing media for this user to prevent duplication
+                        # Delete old media files for this user
                         cursor.execute("DELETE FROM user_media WHERE chat_id = %s", (chat_id,))
                         
                         # Insert new media files
@@ -68,14 +68,27 @@ class UserData:
 
     @classmethod
     def load_users(cls):
-        """ Loads all users from the database. """
+        """Loads all users from the database and retrieves their media files separately."""
         try:
             conn = psycopg2.connect(DATABASE_URL)
             with conn:
                 with conn.cursor() as cursor:
-                    cursor.execute("SELECT chat_id, name, age, gender, description, media_file_ids FROM users")
+                    # Fetch all users
+                    cursor.execute("SELECT chat_id, name, age, gender, description FROM users")
                     users = cursor.fetchall()
 
+                    # Fetch all media files from user_media
+                    cursor.execute("SELECT chat_id, file_id FROM user_media")
+                    media_records = cursor.fetchall()
+
+                    # Organize media files by chat_id
+                    media_dict = {}
+                    for chat_id, file_id in media_records:
+                        if chat_id not in media_dict:
+                            media_dict[chat_id] = []
+                        media_dict[chat_id].append(file_id)
+
+                    # Build user list including media from user_media
                     user_list = [
                         {
                             "chat_id": user[0],
@@ -83,7 +96,7 @@ class UserData:
                             "age": user[2],
                             "gender": user[3],
                             "description": user[4],
-                            "media_file_ids": user[5]  # This is now stored as an array
+                            "media_files": media_dict.get(user[0], [])  # Fetch user's media
                         }
                         for user in users
                     ]
@@ -96,3 +109,4 @@ class UserData:
 
         finally:
             conn.close()
+
