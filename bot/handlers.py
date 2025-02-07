@@ -1,6 +1,6 @@
 import json
-from telegram import Update
-from telegram.ext import CallbackContext, ConversationHandler
+from telegram import Update # type: ignore
+from telegram.ext import CallbackContext, ConversationHandler # type: ignore
 from user_data import UserData
 from buttons import start_keyboard, play_keyboard, gender_keyboard, remove_keyboard
 
