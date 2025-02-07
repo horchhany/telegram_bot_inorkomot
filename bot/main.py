@@ -1,5 +1,5 @@
 import logging
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler # type: ignore
 from handlers import start, lets_start, ask_age, ask_gender, ask_description, ask_photo, finish, cancel, play
 from config import TOKEN
 from handlers import NAME, AGE, GENDER, DESCRIPTION, PHOTO

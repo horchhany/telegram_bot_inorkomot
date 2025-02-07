@@ -1,5 +1,4 @@
 
-import json
 from buttons import update_user
 from user_data import UserData
 

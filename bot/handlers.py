@@ -1,4 +1,4 @@
-import os
+import json
 from telegram import Update
 from telegram.ext import CallbackContext, ConversationHandler
 from user_data import UserData
@@ -37,28 +37,41 @@ async def ask_photo(update: Update, context: CallbackContext):
     return PHOTO
 
 async def finish(update: Update, context: CallbackContext):
-    photo = update.message.photo[-1]
-    file_id = photo.file_id  # Get the file_id from Telegram
     chat_id = update.effective_chat.id
+    media_files = []
 
-    context.user_data["photo_file_id"] = file_id  
-    UserData.save_user(chat_id, context.user_data)  # Save to PostgreSQL
+    # Check if photos exist
+    if update.message.photo:
+        media_files = [photo.file_id for photo in update.message.photo]
 
-    await update.message.reply_text(f"Thank you! Your profile is saved.\nName: {context.user_data['name']}")
+    # Check if a video exists
+    elif update.message.video:
+        media_files.append(update.message.video.file_id)
+
+    if not media_files:
+        await update.message.reply_text("No media found. Please send a photo or video.")
+        return
+
+    # Save file IDs in context and database
+    context.user_data["media_file_ids"] = media_files
+    UserData.save_user(chat_id, context.user_data)
+
+    await update.message.reply_text(f"Your profile is updated.\nName: {context.user_data.get('name', 'Unknown')}")
     return ConversationHandler.END
 
 
-async def send_saved_photo(update: Update, context: CallbackContext):
-    # Fetch user data from PostgreSQL
+async def send_user_media(update: Update, context: CallbackContext):
+    chat_id = update.effective_chat.id
     user_data = UserData.load_user(chat_id)
-    photo_file_id = user_data.get("photo_file_id")
 
-    # Send photo using Telegram's file_id
-    if photo_file_id:
-        await context.bot.send_photo(chat_id=chat_id, photo=photo_file_id, caption=caption)
-    else:
-        await update.message.reply_text(f"No photo found for {name}.")
+    if not user_data or not user_data.get("media_file_ids"):
+        await update.message.reply_text("No media found for this user.")
+        return
 
+    for file_id in user_data["media_file_ids"]:
+        await context.bot.send_photo(chat_id=chat_id, photo=file_id)
+
+    await update.message.reply_text("Here are your saved media files.")
 
 
 async def cancel(update: Update, context: CallbackContext):
