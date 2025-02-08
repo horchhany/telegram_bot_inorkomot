@@ -66,48 +66,47 @@ class UserData:
             conn.close()
 
 
+@classmethod
+def load_users(cls):
+    """Loads all users from the database and retrieves their media files separately."""
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        with conn:
+            with conn.cursor() as cursor:
+                # Fetch all users
+                cursor.execute("SELECT chat_id, name, age, gender, description FROM users")
+                users = cursor.fetchall()
 
-    @classmethod
-    def load_users(cls):
-        """Loads all users from the database and retrieves their media files."""
-        try:
-            conn = psycopg2.connect(DATABASE_URL)
-            with conn:
-                with conn.cursor() as cursor:
-                    # Fetch all users
-                    cursor.execute("SELECT chat_id, name, age, gender, description FROM users")
-                    users = cursor.fetchall()
+                # Fetch all media files, ensuring unique file IDs
+                cursor.execute("SELECT DISTINCT chat_id, file_id, file_type FROM user_media")
+                media_records = cursor.fetchall()
 
-                    # Fetch all media files, ensuring distinct file IDs
-                    cursor.execute("SELECT DISTINCT chat_id, file_id, file_type FROM user_media")
-                    media_records = cursor.fetchall()
+                # Organize media files by chat_id
+                media_dict = {}
+                for chat_id, file_id, file_type in media_records:
+                    if chat_id not in media_dict:
+                        media_dict[chat_id] = []
+                    media_dict[chat_id].append({"file_id": file_id, "file_type": file_type})
 
-                    # Organize media files by chat_id
-                    media_dict = {}
-                    for chat_id, file_id, file_type in media_records:
-                        if chat_id not in media_dict:
-                            media_dict[chat_id] = []
-                        media_dict[chat_id].append({"file_id": file_id, "file_type": file_type})
+                # Build user list including media from user_media
+                user_list = [
+                    {
+                        "chat_id": user[0],
+                        "name": user[1],
+                        "age": user[2],
+                        "gender": user[3],
+                        "description": user[4],
+                        "media_files": media_dict.get(user[0], [])  # Fetch user's media
+                    }
+                    for user in users
+                ]
 
-                    # Build user list including media from user_media
-                    user_list = [
-                        {
-                            "chat_id": user[0],
-                            "name": user[1],
-                            "age": user[2],
-                            "gender": user[3],
-                            "description": user[4],
-                            "media_files": media_dict.get(user[0], [])  # Fetch user's media
-                        }
-                        for user in users
-                    ]
+        return user_list
 
-            return user_list
+    except psycopg2.Error as e:
+        print(f"Database error: {e}")
+        return []
 
-        except psycopg2.Error as e:
-            print(f"Database error: {e}")
-            return []
-
-        finally:
-            conn.close()
+    finally:
+        conn.close()
 

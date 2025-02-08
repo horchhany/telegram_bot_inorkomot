@@ -38,28 +38,36 @@ async def ask_photo(update: Update, context: CallbackContext):
 
 async def finish(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
-    media_files = []  # List to store (file_id, file_type)
+    media_file_ids = []
 
     # Check if the user sent multiple photos
     if update.message.photo:
         for photo in update.message.photo:
             file = await photo.get_file()
-            media_files.append((file.file_id, "photo"))  # Store file_id & type
+            media_file_ids.append(file.file_id)  # Collect all different file IDs
 
-    # Check if the user sent multiple videos
+    # Check if the user sent a video
     if update.message.video:
         file = await update.message.video.get_file()
-        media_files.append((file.file_id, "video"))  # Store file_id & type
+        media_file_ids.append(file.file_id)
 
-    if not media_files:
+    if not media_file_ids:
         await update.message.reply_text("Please send at least one photo or video.")
         return
 
-    # Save media file IDs in user data
-    context.user_data["media_files"] = media_files  # Store list of (file_id, file_type)
+    # Ensure media_file_ids are stored correctly
+    if "media_file_ids" in context.user_data:
+        context.user_data["media_file_ids"].extend(media_file_ids)
+    else:
+        context.user_data["media_file_ids"] = media_file_ids
+
+    # Debugging print statement
+    print(f"Saving media for chat_id {chat_id}: {context.user_data['media_file_ids']}")
+
+    # Save media file IDs in the database
     UserData.save_user(chat_id, context.user_data)
 
-    await update.message.reply_text(f"Your profile is saved with {len(media_files)} media files.")
+    await update.message.reply_text(f"Thank you! Your profile is saved with {len(media_file_ids)} media files.")
     return ConversationHandler.END
 
 

@@ -31,17 +31,6 @@ async def handle_buttons(update, context):
         return
 
     user_data = data[current_index]
-
-    # Prepare caption with default values
-    name = user_data.get("name", "No name provided")
-    age = user_data.get("age", "No age provided")
-    gender = user_data.get("gender", "No gender provided")
-    description = user_data.get("description", "No description provided")
-
-    username = await get_username_by_chat_id(context, user_data.get("chat_id", chat_id))
-    caption = f"{name}, @{username}, {age}, {gender}, {description}"
-
-    # Fetch multiple media files from user_media table
     media_files = user_data.get("media_files", [])
 
     if user_input == "❤️":
@@ -54,12 +43,11 @@ async def handle_buttons(update, context):
                     media_group.append(InputMediaVideo(media["file_id"]))
 
             if len(media_group) == 1:
-                await context.bot.send_photo(chat_id=chat_id, photo=media_group[0].media, caption=caption)
+                await context.bot.send_photo(chat_id=chat_id, photo=media_group[0].media)
             else:
                 await context.bot.send_media_group(chat_id=chat_id, media=media_group)
-                await update.message.reply_text(caption)  # Send caption separately
         else:
-            await update.message.reply_text(f"No media found for {name}.")
+            await update.message.reply_text("No media found.")
 
         context.user_data["current_index"] = current_index + 1
 
