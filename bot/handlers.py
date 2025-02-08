@@ -1,5 +1,5 @@
 import json
-from telegram import Update # type: ignore
+from telegram import Update, InputMediaPhoto, InputMediaVideo # type: ignore
 from telegram.ext import CallbackContext, ConversationHandler # type: ignore
 from user_data import UserData
 from buttons import start_keyboard, play_keyboard, gender_keyboard, remove_keyboard
@@ -38,42 +38,53 @@ async def ask_photo(update: Update, context: CallbackContext):
 
 async def finish(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
-    media_file_ids = []
+    media_files = []  # List to store (file_id, file_type)
 
     # Check if the user sent multiple photos
     if update.message.photo:
         for photo in update.message.photo:
             file = await photo.get_file()
-            media_file_ids.append(file.file_id)  # Store the file_id, not the local path
+            media_files.append((file.file_id, "photo"))  # Store file_id & type
 
-    # Check if the user sent a video
+    # Check if the user sent multiple videos
     if update.message.video:
         file = await update.message.video.get_file()
-        media_file_ids.append(file.file_id)
+        media_files.append((file.file_id, "video"))  # Store file_id & type
 
-    if not media_file_ids:
+    if not media_files:
         await update.message.reply_text("Please send at least one photo or video.")
         return
 
     # Save media file IDs in user data
-    context.user_data["media_file_ids"] = media_file_ids
+    context.user_data["media_files"] = media_files  # Store list of (file_id, file_type)
     UserData.save_user(chat_id, context.user_data)
 
-    await update.message.reply_text(f"Thank you! Your profile is saved with {len(media_file_ids)} media files.")
+    await update.message.reply_text(f"Your profile is saved with {len(media_files)} media files.")
     return ConversationHandler.END
-
 
 
 async def send_user_media(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     user_data = UserData.load_user(chat_id)
 
-    if not user_data or not user_data.get("media_file_ids"):
+    if not user_data or not user_data.get("media_files"):
         await update.message.reply_text("No media found for this user.")
         return
 
-    for file_id in user_data["media_file_ids"]:
-        await context.bot.send_photo(chat_id=chat_id, photo=file_id)
+    media_files = user_data["media_files"]  # List of {file_id, file_type}
+
+    media_group = []  # Stores media for batch sending
+
+    for media in media_files:
+        file_id, file_type = media["file_id"], media["file_type"]
+        if file_type == "photo":
+            media_group.append(InputMediaPhoto(file_id))
+        elif file_type == "video":
+            media_group.append(InputMediaVideo(file_id))
+
+    # Send all media in one group (up to 10 per request)
+    if media_group:
+        await context.bot.send_media_group(chat_id=chat_id, media=media_group)
 
     await update.message.reply_text("Here are your saved media files.")
 

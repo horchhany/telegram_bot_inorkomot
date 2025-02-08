@@ -1,6 +1,6 @@
-import psycopg2
+import psycopg2 # type: ignore
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
 
 # Load environment variables
 load_dotenv()
@@ -11,7 +11,7 @@ class UserData:
 
     @classmethod
     def save_user(cls, chat_id, user_data):
-        """ Saves or updates a user and stores media in `user_media` table. """
+        """ Saves or updates a user and stores multiple media files in `user_media` table. """
         try:
             conn = psycopg2.connect(DATABASE_URL)
             with conn:
@@ -46,15 +46,14 @@ class UserData:
                             user_data.get("description")
                         ))
 
-                    # Save media files in user_media
-                    media_files = user_data.get("media_file_ids", [])
+                    # Save multiple media files (photos/videos)
+                    media_files = user_data.get("media_files", [])
                     if media_files:
                         # Delete old media files for this user
                         cursor.execute("DELETE FROM user_media WHERE chat_id = %s", (chat_id,))
                         
                         # Insert new media files
-                        for file_id in media_files:
-                            file_type = "photo"  # Default to photo, update as needed
+                        for file_id, file_type in media_files:
                             cursor.execute("""
                                 INSERT INTO user_media (chat_id, file_id, file_type)
                                 VALUES (%s, %s, %s)
@@ -78,15 +77,15 @@ class UserData:
                     users = cursor.fetchall()
 
                     # Fetch all media files from user_media
-                    cursor.execute("SELECT chat_id, file_id FROM user_media")
+                    cursor.execute("SELECT chat_id, file_id, file_type FROM user_media")
                     media_records = cursor.fetchall()
 
                     # Organize media files by chat_id
                     media_dict = {}
-                    for chat_id, file_id in media_records:
+                    for chat_id, file_id, file_type in media_records:
                         if chat_id not in media_dict:
                             media_dict[chat_id] = []
-                        media_dict[chat_id].append(file_id)
+                        media_dict[chat_id].append({"file_id": file_id, "file_type": file_type})
 
                     # Build user list including media from user_media
                     user_list = [
@@ -109,4 +108,3 @@ class UserData:
 
         finally:
             conn.close()
-
