@@ -68,7 +68,7 @@ class UserData:
 
 @classmethod
 def load_users(cls):
-    """Loads all users from the database and retrieves their media files separately."""
+    """Loads all users from the database and retrieves their media files."""
     try:
         conn = psycopg2.connect(DATABASE_URL)
         with conn:
@@ -77,8 +77,8 @@ def load_users(cls):
                 cursor.execute("SELECT chat_id, name, age, gender, description FROM users")
                 users = cursor.fetchall()
 
-                # Fetch all media files, ensuring unique file IDs
-                cursor.execute("SELECT DISTINCT chat_id, file_id, file_type FROM user_media")
+                # Fetch media files
+                cursor.execute("SELECT chat_id, file_id, file_type FROM user_media")
                 media_records = cursor.fetchall()
 
                 # Organize media files by chat_id
@@ -88,7 +88,7 @@ def load_users(cls):
                         media_dict[chat_id] = []
                     media_dict[chat_id].append({"file_id": file_id, "file_type": file_type})
 
-                # Build user list including media from user_media
+                # Build user list
                 user_list = [
                     {
                         "chat_id": user[0],
@@ -96,7 +96,7 @@ def load_users(cls):
                         "age": user[2],
                         "gender": user[3],
                         "description": user[4],
-                        "media_files": media_dict.get(user[0], [])  # Fetch user's media
+                        "media_files": media_dict.get(user[0], [])  # Attach user's media
                     }
                     for user in users
                 ]
@@ -109,4 +109,3 @@ def load_users(cls):
 
     finally:
         conn.close()
-
