@@ -11,7 +11,7 @@ class UserData:
 
     @classmethod
     def save_user(cls, chat_id, user_data):
-        """ Saves or updates a user and stores multiple media files in `user_media` table. """
+        """ Saves or updates a user and stores media in `user_media` table. """
         try:
             conn = psycopg2.connect(DATABASE_URL)
             with conn:
@@ -46,23 +46,25 @@ class UserData:
                             user_data.get("description")
                         ))
 
-                    # Save multiple media files (photos/videos)
-                    media_files = user_data.get("media_files", [])
+                    # Save media files in user_media
+                    media_files = user_data.get("media_file_ids", [])
+
                     if media_files:
                         # Delete old media files for this user
                         cursor.execute("DELETE FROM user_media WHERE chat_id = %s", (chat_id,))
                         
-                        # Insert new media files
-                        for file_id, file_type in media_files:
+                        # Insert new media files with correct type
+                        for media in media_files:
                             cursor.execute("""
                                 INSERT INTO user_media (chat_id, file_id, file_type)
                                 VALUES (%s, %s, %s)
-                            """, (chat_id, file_id, file_type))
+                            """, (chat_id, media["file_id"], media["file_type"]))
 
         except psycopg2.Error as e:
             print(f"Database error: {e}")
         finally:
             conn.close()
+
 
 
     @classmethod
