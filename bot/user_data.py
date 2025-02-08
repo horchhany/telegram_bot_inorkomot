@@ -69,7 +69,7 @@ class UserData:
 
     @classmethod
     def load_users(cls):
-        """Loads all users from the database and retrieves their media files separately."""
+        """Loads all users from the database and retrieves their media files."""
         try:
             conn = psycopg2.connect(DATABASE_URL)
             with conn:
@@ -78,8 +78,8 @@ class UserData:
                     cursor.execute("SELECT chat_id, name, age, gender, description FROM users")
                     users = cursor.fetchall()
 
-                    # Fetch all media files from user_media
-                    cursor.execute("SELECT chat_id, file_id, file_type FROM user_media")
+                    # Fetch all media files, ensuring distinct file IDs
+                    cursor.execute("SELECT DISTINCT chat_id, file_id, file_type FROM user_media")
                     media_records = cursor.fetchall()
 
                     # Organize media files by chat_id
@@ -110,3 +110,4 @@ class UserData:
 
         finally:
             conn.close()
+

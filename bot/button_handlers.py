@@ -17,22 +17,22 @@ async def handle_buttons(update, context):
     chat_id = update.effective_chat.id
 
     # Fetch users from PostgreSQL
-    users = UserData.load_users()
+    data = UserData.load_users()
 
-    if not users:
+    if not data:
         await update.message.reply_text("No user data found. Please register first.")
         return
 
     current_index = context.user_data.get("current_index", 0)
 
-    if current_index >= len(users):
+    if current_index >= len(data):
         await update.message.reply_text("No more users to display.")
         context.user_data["current_index"] = 0  # Restart browsing
         return
 
-    user_data = users[current_index]
+    user_data = data[current_index]
 
-    # Prepare user information
+    # Prepare caption with default values
     name = user_data.get("name", "No name provided")
     age = user_data.get("age", "No age provided")
     gender = user_data.get("gender", "No gender provided")
@@ -41,33 +41,26 @@ async def handle_buttons(update, context):
     username = await get_username_by_chat_id(context, user_data.get("chat_id", chat_id))
     caption = f"{name}, @{username}, {age}, {gender}, {description}"
 
-    # Fetch media files from database
+    # Fetch multiple media files from user_media table
     media_files = user_data.get("media_files", [])
 
     if user_input == "❤️":
         if media_files:
             media_group = []
+            for media in media_files[:10]:  # Max 10 media files
+                if media["file_type"] == "photo":
+                    media_group.append(InputMediaPhoto(media["file_id"]))
+                elif media["file_type"] == "video":
+                    media_group.append(InputMediaVideo(media["file_id"]))
 
-            for media in media_files[:10]:  # Max 10 files
-                file_id = media.get("file_id")
-                file_type = media.get("file_type", "photo")  # Default to photo
-
-                if file_type == "photo":
-                    media_group.append(InputMediaPhoto(file_id))
-                elif file_type == "video":
-                    media_group.append(InputMediaVideo(file_id))
-
-            # Send media as a group (if multiple files exist)
-            if media_group:
+            if len(media_group) == 1:
+                await context.bot.send_photo(chat_id=chat_id, photo=media_group[0].media, caption=caption)
+            else:
                 await context.bot.send_media_group(chat_id=chat_id, media=media_group)
-
-            # Send caption separately
-            await update.message.reply_text(caption)
-
+                await update.message.reply_text(caption)  # Send caption separately
         else:
             await update.message.reply_text(f"No media found for {name}.")
 
-        # Move to the next user
         context.user_data["current_index"] = current_index + 1
 
     elif user_input == "💤":
